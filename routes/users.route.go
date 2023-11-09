@@ -26,6 +26,7 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("User Not Found"))
 		return
 	}
+	db.DB.Model(&user).Association("Tasks").Find(&user.Tasks)
 	json.NewEncoder(w).Encode(&user)
 }
 
@@ -59,8 +60,16 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var newUser models.User
-	json.NewDecoder(r.Body).Decode(&newUser)
+	err := json.NewDecoder(r.Body).Decode(&newUser)
 
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest) //400
+		w.Write([]byte("Error Creating User" + err.Error()))
+		// json.NewEncoder(w).Encode(err)
+		return
+	}
+
+	
 	// Actualiza el usuario
 	db.DB.Model(&user).Updates(newUser)
 
